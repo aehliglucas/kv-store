@@ -60,38 +60,40 @@ func (store *KVStore) flush() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	store.memtable = make(map[string]string)
 }
 
 func (store *KVStore) querySSTs(key string) (string, error) {
-	var sstFiles []string
-	err := filepath.Walk(store.sst_dir, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			sstFiles = append(sstFiles, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return "", err
-	}
+	files, _ := os.ReadDir(store.sst_dir)
 
-	for _, file := range sstFiles {
-		fileHandler, err := os.OpenFile(file, os.O_CREATE|os.O_RDWR, 0640)
+	for _, file := range files {
+		result, err := store.deserializeSST(file.Name())
 		if err != nil {
 			return "", err
 		}
-		
-		var result map[string]string
-		decoder := gob.NewDecoder(fileHandler)
-		err = decoder.Decode(&result)
-		if err != nil {
-			return "", err
-		}
-		fileHandler.Close()
-		value, ok := result[key]
-		if ok {
+		if value, ok := result[key]; ok {
 			return value, nil
 		}
 	}
-	return "", fmt.Errorf("Key %s not found in SSTables", key)
+
+	return "", fmt.Errorf("Key %s not found.", key)
+}
+
+func (store *KVStore) deserializeSST(fileName string) (map[string]string, error) {
+	filePath := filepath.Join(store.sst_dir, fileName)
+	fileHandler, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0640)
+	if err != nil {
+		return nil, err
+	}
+	defer fileHandler.Close()
+	
+	var result map[string]string
+	decoder := gob.NewDecoder(fileHandler)
+	err = decoder.Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

@@ -17,5 +17,5 @@ func main() {
 	kvstore.Put("b", "0815")
 	kvstore.Put("d", "i have been flushed!")
 	fmt.Printf("Obtained from memtable: %s\n", kvstore.Get("d"))
-	fmt.Printf("Obtained from disk: %s", kvstore.Get("a"))
+	fmt.Printf("Obtained from disk: %s\n", kvstore.Get("a"))
 }
