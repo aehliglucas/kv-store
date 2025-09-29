@@ -24,8 +24,8 @@ type PredecessorResult struct {
 var ErrKeyNotFound = errors.New("Key not found")
 
 func NewSkipList(maxLevel int, p float64) *Skiplist {
-	head := NewSkiplistNode(maxLevel, "head_KEY", "head_VALUE")
-	tail := NewSkiplistNode(maxLevel, "\xff", "tail_VALUE")
+	head := NewSkiplistNode(maxLevel, "HEAD_KEY", "")
+	tail := NewSkiplistNode(maxLevel, "\xff", "")
 	randSource := rand.NewSource(time.Now().UnixNano())
 	 
 	for i := range maxLevel {
@@ -47,6 +47,10 @@ func (list *Skiplist) Search(key string) (string, error) {
 }
 
 func (list *Skiplist) Insert(key string, value string) error {
+	level := list.getRandomLevel()
+	if level > list.currentMaxLevel {
+		list.currentMaxLevel = level
+	}
 	return nil
 }
 
